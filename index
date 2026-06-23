@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Axie Genetics Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🧬</span>
+      <span class="logo-text">Axie <strong>Genetics</strong></span>
+    </div>
+    <span class="nav-tag">Calculadora de crías · v3</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ══ PASO 1: FILTRO DE CARTAS ══════════════════════════════ -->
+  <section class="section">
+    <div class="section-eyebrow">Paso 1 — Define las cartas que quieres</div>
+    <h2 class="section-title">¿Qué cartas quieres en la cría?</h2>
+    <p class="section-desc">
+      Selecciona una carta por parte del cuerpo. Filtra por clase (Plant, Bug…) o escribe el nombre.
+      Estas cartas se usan para buscar en el marketplace <em>y</em> para calcular probabilidades.
+    </p>
+    <div id="filter-builder"></div>
+    <div class="filter-actions-row">
+      <button class="btn-ghost" onclick="clearAllFilters()">✕ Limpiar todo</button>
+    </div>
+  </section>
+
+  <!-- ══ PASO 2: IMPORTAR AXIES ════════════════════════════════ -->
+  <section class="section">
+    <div class="section-eyebrow">Paso 2 — Importa los axies</div>
+    <h2 class="section-title">¿Dónde buscamos los axies?</h2>
+    <p class="section-desc">
+      Elige una fuente. Los axies que cargues van al <strong>pool de análisis</strong>,
+      donde la app compara todas las combinaciones posibles y te dice cuál par da mayor probabilidad.
+    </p>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="market">🛒 Marketplace</button>
+      <button class="tab-btn" data-tab="wallet">👛 Mi Wallet</button>
+      <button class="tab-btn" data-tab="ids">🔢 Por IDs</button>
+      <button class="tab-btn" data-tab="pair">⚔️ Par directo</button>
+    </div>
+
+    <!-- Tab: Marketplace -->
+    <div class="tab-pane" id="tab-market">
+      <div class="tab-card">
+        <p class="tab-hint">
+          Busca directamente en el marketplace axies que tengan las cartas que seleccionaste arriba.
+          Los resultados se agregan al pool automáticamente para analizar combinaciones.
+        </p>
+        <div class="market-filters-row">
+          <div class="market-filter-field">
+            <label>Precio máximo (USD)</label>
+            <input type="number" id="market-max-price" placeholder="Sin límite" min="0" class="small-input" />
+          </div>
+          <div class="market-filter-field">
+            <label>Número de crías del axie</label>
+            <div class="breed-checks">
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="0" checked /> 0</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="1" checked /> 1</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="2" checked /> 2</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="3" /> 3</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="4" /> 4</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="5" /> 5</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="6" /> 6</label>
+              <label class="breed-check-label"><input type="checkbox" class="breed-check" value="7" /> 7</label>
+            </div>
+          </div>
+        </div>
+        <div class="input-row">
+          <button class="btn-primary" id="btn-search-market">🔍 Buscar en Marketplace</button>
+        </div>
+        <div id="market-status" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Wallet -->
+    <div class="tab-pane hidden" id="tab-wallet">
+      <div class="tab-card">
+        <p class="tab-hint">
+          Ingresa la dirección de tu wallet Ronin para importar todos tus axies.
+          La app analizará qué pares de tu colección tienen más probabilidad de dar las cartas que quieres.
+          Formato aceptado: <code>ronin:0xabc123...</code> o <code>0xabc123...</code>
+        </p>
+        <div class="input-row">
+          <input type="text" id="input-wallet" placeholder="ronin:0x... o 0x..." class="big-input" />
+          <button class="btn-primary" id="btn-load-wallet">Importar wallet</button>
+        </div>
+        <div id="wallet-status" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Tab: IDs -->
+    <div class="tab-pane hidden" id="tab-ids">
+      <div class="tab-card">
+        <p class="tab-hint">
+          Ingresa uno o varios IDs de axies separados por coma, espacio o punto y coma.
+          El ID está en la URL del axie: <code>marketplace/axies/<strong>12345678</strong></code>
+        </p>
+        <div class="input-row">
+          <input type="text" id="input-ids" placeholder="Ej: 12211417, 12235046, 11900234" class="big-input" />
+          <button class="btn-primary" id="btn-load-ids">Cargar</button>
+        </div>
+        <div id="ids-status" class="status-msg"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Par directo -->
+    <div class="tab-pane hidden" id="tab-pair">
+      <div class="tab-card">
+        <p class="tab-hint">
+          Carga exactamente dos axies para ver su tabla genética completa (D, R1, R2)
+          y la probabilidad de producir las cartas que elegiste en el Paso 1.
+        </p>
+        <div class="pair-loaders">
+          <div class="pair-slot">
+            <div class="pair-slot-header"><span class="loader-badge badge-a">Axie A</span></div>
+            <div class="input-row">
+              <input type="text" id="input-pair-a" placeholder="ID del Axie A" class="big-input" />
+              <button class="btn-primary" id="btn-load-pair-a">Cargar</button>
+            </div>
+            <div id="status-pair-a" class="status-msg"></div>
+            <div id="preview-pair-a"></div>
+          </div>
+          <div class="pair-vs">VS</div>
+          <div class="pair-slot">
+            <div class="pair-slot-header"><span class="loader-badge badge-b">Axie B</span></div>
+            <div class="input-row">
+              <input type="text" id="input-pair-b" placeholder="ID del Axie B" class="big-input" />
+              <button class="btn-primary" id="btn-load-pair-b">Cargar</button>
+            </div>
+            <div id="status-pair-b" class="status-msg"></div>
+            <div id="preview-pair-b"></div>
+          </div>
+        </div>
+        <div id="pair-result-area"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ RESULTADOS DE MARKETPLACE ════════════════════════════ -->
+  <section class="section hidden" id="market-results-section">
+    <div class="section-eyebrow">Resultados del Marketplace</div>
+    <h2 class="section-title">Axies encontrados en venta</h2>
+    <p class="section-desc">
+      Estos axies están actualmente en el marketplace con las cartas que seleccionaste.
+      Se han agregado al pool de análisis automáticamente. Haz clic en cualquiera para verlo en el marketplace.
+    </p>
+    <div id="market-results-grid" class="market-grid"></div>
+  </section>
+
+  <!-- ══ POOL + ANÁLISIS ══════════════════════════════════════ -->
+  <section class="section">
+    <div class="pool-header">
+      <div>
+        <div class="section-eyebrow">Pool de análisis</div>
+        <span id="pool-count" class="pool-count-label">0 axie(s)</span>
+      </div>
+      <div class="pool-btns">
+        <button class="btn-ghost" onclick="clearPool()">Vaciar pool</button>
+        <button class="btn-primary" onclick="analyzeAllPairs()">
+          🔬 Analizar todas las combinaciones
+        </button>
+      </div>
+    </div>
+    <div id="loaded-pool" class="loaded-pool">
+      <p class="hint-text">Importa axies desde el Marketplace, tu wallet o por IDs para empezar.</p>
+    </div>
+  </section>
+
+  <!-- ══ RESULTADOS DE ANÁLISIS ════════════════════════════════ -->
+  <section class="section hidden" id="results-section">
+    <div class="section-eyebrow">Resultado del análisis</div>
+    <h2 class="section-title">Mejores combinaciones para criar</h2>
+    <p class="section-desc">
+      Todos los pares posibles entre los axies del pool, ordenados de mayor a menor probabilidad
+      de producir exactamente las cartas que seleccionaste.
+    </p>
+    <div id="analysis-results"></div>
+  </section>
+
+  <!-- ══ LEYENDA ════════════════════════════════════════════════ -->
+  <section class="section gene-legend-section">
+    <div class="legend-title">Cómo se heredan los genes</div>
+    <div class="legend-items">
+      <div class="legend-item">
+        <span class="gene-pill d-pill">D</span>
+        <span>Dominante — 37.5% de probabilidad de heredarse</span>
+      </div>
+      <div class="legend-item">
+        <span class="gene-pill r1-pill">R1</span>
+        <span>Recesivo 1 — 9.375% de probabilidad</span>
+      </div>
+      <div class="legend-item">
+        <span class="gene-pill r2-pill">R2</span>
+        <span>Recesivo 2 — 3.125% de probabilidad</span>
+      </div>
+      <div class="legend-item" style="margin-top:4px">
+        <span style="font-size:13px;color:var(--text-2)">
+          Cada gen tiene 50% de venir del padre A y 50% del padre B.
+          El máximo posible de un gen D de un solo padre es 37.5% × 50% = <strong>18.75%</strong>.
+          Si el mismo gen aparece en ambos padres, se suman las contribuciones.
+        </span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>Datos de la API pública de Axie Infinity · Probabilidades según mecánicas oficiales del juego.</p>
+</footer>
+
+<script src="cards.js"></script>
+<script src="genetics.js"></script>
+<script src="api.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
